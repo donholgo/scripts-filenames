@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+chomp(@ARGV = <STDIN>) unless @ARGV;
+for (@ARGV) {
+  my $was = $_;
+  $_ = lc $_;
+  s-([[:alpha:]])-\u$1-;
+  s-([[:^alpha:]])(i)([[:^alpha:]])-$1\u$2$3-g;
+  s-\[(live|instrum|remix|rmx|edit|single)-[\u$1-g;
+  s-\(([[:alpha:]])-(\u$1-g;
+  s-christmas-Christmas-g;
+  s-xmas-Xmas-g;
+  if ($_ ne $was) {
+    if (-e $_) {
+      print STDERR "Not renaming $was to $_ (file exists)!\n";
+    } else {
+      print "$was -> $_\n";
+      rename($was, $_);
+    }
+  }
+}

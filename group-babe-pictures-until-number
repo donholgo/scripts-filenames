@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+die "Usage: ".(basename $0)." last-number\n" unless (@ARGV == 1 || @ARGV == 2);
+
+my $number = shift;
+$number = sprintf "%04i", $number;
+my $last_file = (glob "*-Foto$number.jpg")[0];
+#my $last_file = (glob "*-DSCN$number.jpg")[0];
+
+(my $date = $last_file) =~ s/-.*//;
+
+my @files_for_date = glob "$date-*.jpg";
+
+my $n = 1;
+my $fixed_n = 0;
+if (@ARGV) {
+  $fixed_n = 1;
+  $n = shift;
+}
+foreach my $old (@files_for_date) {
+  if ($old !~ /xx/) {
+    unless ($fixed_n) {
+      my ($m) = $old =~ m/-(\d+)-/;
+      $n = $m + 1 if $n <= $m;
+    }
+  } else {
+    my $new = $old;
+    $new =~ s/.*-//;
+    $new = sprintf "%s-%02i-%s", $date, $n, $new;
+    print "$old -> $new\n";
+    rename $old, $new or warn "can't rename: $!\n";
+  }
+  last if $old eq $last_file;
+}

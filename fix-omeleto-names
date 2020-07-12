@@ -1,0 +1,13 @@
+#!/bin/bash
+
+shopt -s nullglob
+videos=(*.mp4 *.mkv *.webm)
+if [[ ${#videos[@]} -eq 0 ]]; then
+  echo >&2 "No videos (mp4/mkv/webm) found."
+  exit 1
+fi
+
+rename 's/-[0-9a-z_-]{11}(\.\w+)$/$1/i' *.mp4 *.mkv *.webm
+rename 's/(.*) _ (.*)(\.\w+)$/$2 ~ $1$3/' *.mp4 *.mkv *.webm
+rename 's/\.+/./g' *.mp4 *.mkv *.webm
+prepend-timestamp -format  '%Y%m%d' -separator '.' *.mp4 *.mkv *.webm

@@ -1,0 +1,56 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+use Getopt::Long;
+use POSIX qw(strftime);
+
+my $format = '%Y%m%d_%H%M%S';
+my $separator = '-';
+my $replace = 0;
+
+my $test;
+GetOptions(
+  "format=s" => \$format,
+  "replace" => \$replace,
+  "separator=s" => \$separator,
+  "test" => \$test,
+);
+
+die "Usage:\n  ".(basename $0)." [-format STRFTIME-FORMAT] [-replace] [-separator SEPARATOR] [-test] file ...\n\n(Defaults: format '%Y%m%d_%H%M%S', separator '-')\n" unless @ARGV;
+
+foreach (@ARGV) {
+  next unless -f;
+  my $mtime = (stat)[9];
+  my $old = $_;
+
+  my $f = $format;
+  my $dir = "";
+  if (m-^(.*/)(.*)$-) {
+    $dir = $1;
+    $_ = $2;
+  }
+  my $base = $_;
+  my $ext = "";
+  if (/(.*)(\..*)$/) {
+    $base = $1;
+    $ext = $2;
+  }
+  if ($f =~ /%n/) {
+    (my $aux = $base) =~ s/%/%%/g;
+    $f =~ s/%n/$aux/g;
+  }
+  my $formatted = strftime($f, localtime($mtime));
+  my $new = $dir.($replace ? $formatted : "${formatted}${separator}$base").$ext;
+  print "$_ -> $new\n";
+  unless ($test) {
+    rename $_, $new or warn "can't rename: $!\n";
+  }
+}
+
+
+
+
+
+

@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use File::Basename;
+use File::Copy;
+use Getopt::Long;
+
+my $test = 0;
+my $copy = 0;
+GetOptions( "copy" => \$copy, "test" => \$test );
+
+my $prefix = shift or die "Usage: ".(basename $0)." [-copy] [-test] prefix [file ...]\n";
+chomp(@ARGV = <STDIN>) unless @ARGV;
+for (@ARGV) {
+  my $was = $_;
+  $_ = $prefix.$_;
+  if ($_ ne $was) {
+    if (-e $_) {
+      print STDERR "Not ".($copy ? "copying" : "renaming")." $was to $_ (file exists)!\n";
+    } else {
+      print "$was -> $_\n";
+      unless ($test) {
+        if ($copy) {
+          copy($was, $_) or print STDERR "Copying $was -> $_ failed!\n";
+        } else {
+          rename($was, $_);
+        }
+      }
+    }
+  }
+}

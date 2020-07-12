@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+die "Usage: ".(basename $0)." last-time\n" unless (@ARGV == 1 || @ARGV == 2);
+
+my $last_time = shift;
+my @files_for_time = glob "*-xx-$last_time*.jpg";
+#die "More than one file for time $last_time found: ".join(", ", @files_for_time)."\n" if @files_for_time > 1;
+die "No file with time $last_time found.\n" unless @files_for_time;
+
+my $last_file_for_time = $files_for_time[-1];
+
+(my $date = $last_file_for_time) =~ s/-xx-.*//;
+
+my @files_for_date = glob "$date-*.jpg";
+
+my $n = 1;
+my $fixed_n = 0;
+if (@ARGV) {
+  $fixed_n = 1;
+  $n = shift;
+}
+foreach my $old (@files_for_date) {
+  if ($old =~ /xx/) {
+    (my $new = $old) =~ s/xx/sprintf "%02i", $n/e;
+    print "$old -> $new\n";
+    unless (-f $new) {
+      rename $old, $new or warn "can't rename: $!\n";
+    }
+  } else {
+    unless ($fixed_n) {
+      my ($m) = $old =~ m/-(\d+)-/;
+      $n = $m + 1 if $n <= $m;
+    }
+  }
+  last if $old eq $last_file_for_time;
+}

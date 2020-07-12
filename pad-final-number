@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+die "Usage: ".(basename $0)." file ...\n" unless @ARGV > 1;
+
+my $prefix = $ARGV[0];
+my $maxlen = 0;
+foreach (@ARGV) {
+  $maxlen = length if $maxlen < length;
+  chop $prefix while (! /^\Q$prefix/);
+}
+
+chop $prefix while $prefix =~ /\d$/;
+die "No common prefix found.\n" unless $prefix;
+
+foreach (@ARGV) {
+  my $len = length;
+  if ($len < $maxlen) {
+    my $suffix = substr $_, length($prefix);
+    my $new = $prefix . '0' x ($maxlen - $len) . $suffix;
+    if (-f $new) {
+      warn "Not renaming $_ to $new (file exists)!\n";
+    } else {
+      print "$_ -> $new\n";
+      rename $_, $new;
+    }
+  }
+}

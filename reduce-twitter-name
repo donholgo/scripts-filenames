@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+die "Usage: ".(basename $0)." file ...\n" unless @ARGV;
+
+foreach my $file (@ARGV) {
+  unless (-f $file) {
+    warn "No file $file.\n";
+    next;
+  }
+  if ($file =~ /-([0-9a-z_-]{19}\.\w+)$/) {
+    my $new = $1;
+    if (! -f $new) {
+      if (rename($file, $new)) { 
+	print "$file -> $new\n";
+      } else {
+	warn "Can't rename $file to $new: $!\n";
+      }
+    } else {
+      warn "Not renaming $file to $new (file exists).\n";
+    }
+  }
+}

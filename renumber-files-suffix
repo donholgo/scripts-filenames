@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+die "Usage: ".(basename $0)." file ...\nRenumbers files, replacing trailing digits.\n" unless @ARGV;
+
+my $separator = '-';  # only used if there are no trailing digits
+my $len = length scalar @ARGV;
+$len = 2 if $len == 1;
+
+my $k = 1;
+while (@ARGV) {
+  my $old = shift;
+  (my $new = $old) =~ s/\..*?$//;
+  my $suffix = '';
+  if ($old =~ /\./) {
+    ($suffix = $old) =~ s/.*\.//;
+    $suffix = '.'.$suffix;
+  }
+  if ($new =~ /\d+$/) {
+    $new =~ s/\d+$//;
+  } else {
+    $new .= $separator;
+  }
+  $new = sprintf "%s%0*i%s", $new, $len, $k++, $suffix;
+  if ($new ne $old) {
+    print "$old -> $new\n";
+    rename $old, $new or warn "can't rename $old: $!\n";
+  }
+}

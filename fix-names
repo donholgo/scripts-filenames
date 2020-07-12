@@ -1,0 +1,137 @@
+#!/usr/bin/perl
+
+use utf8;
+use strict;
+use warnings;
+use Encode;
+use File::Basename;
+use Getopt::Long;
+use POSIX;
+
+my $test;
+GetOptions("test" => \$test);
+
+my @files = @ARGV;
+@files = grep(/\.jpe?g/i, glob("*")) unless @files;
+
+foreach (@files) {
+  my $old = $_;
+  next unless -f;
+  next unless /\./;
+
+  s/(\.jpg):large.jpeg$/$1/;
+  $_ = decode("utf-8", $_);
+  my ($base, $ext) = /(.*)\.([^.]+)$/;
+  $base =~ s/\.php//;
+  $_ = $base;
+
+  # lowercase extension
+  $ext = lc $ext;
+  $ext =~ s/jpeg/jpg/;
+  $ext =~ s/(%7e|~)original//i;
+
+  if (/lo$/) {
+    s/^\d+_//;
+    s/_+12[23]_\d+lo//
+  }
+
+  s/^\d{5}_((BJ|PS)_)?//;
+  s/^0_//;
+
+  s/(\d\d)(\d\d)(\d\d\d\d)ky\.\w\w\w_\3_\2_\1/_$3-$2-$1_/;
+  s/^Preppie_(-_)?//;
+  s/_?Tikipeter//i;
+  s/_?celebritycity//;
+  s/Celebrity_?City_?//i;
+  s/by_mah0ne[-_]//;
+  s/celeb-city.org_//;
+  s/idol-celebs.com_?//i;
+  s/^dream.celebs.com_?//i;
+  s/^fenceking(HD)?[-_]//i;
+  s/^iron[-_]//i;
+  s/tduid300010_//;
+  s/BULLY_//;
+  s/bc_//;
+  s/babes_board_//;
+  s/Mansion_of_Celebs_//i;
+  s/By_oTTo//;
+  s/oTToCaps//;
+  s/cipsis//;
+  s/MCFan_for_celeblounge//;
+  s/idol_celebs\.com_//;
+  s/Celebutopia[-_]?//i;
+  s/celebrity[-_]?paradise[_.]?com_?//i;
+  s/The_?Elder_?//i;
+  s/Neuer_?Ordner_?//i;
+  s/\@legqueensworld/_/;
+  s/\@tv-frauen-in-nylons/_/;
+  s/\.british(soap|singing|movie)babes\.(com|co\.uk)/_/;
+  s/\.worldoftvbabes\.co\.uk//;
+  s/^_?MG_/IMG_/;
+  s/_jpg//ig;
+
+  s/^\d+_(catheinz)/$1/;
+
+  if (/^\d{8,9}(_[a-z]+)+_\d{3,4}$/) {
+    s/\d{8,9}//;
+    s/_([a-z]+)/_\u$1/g;
+  }
+
+  s/[äáàâ]/a/g;
+  s/[ÄÁÀÂ]/A/g;
+  s/[éèê]/e/g;
+  s/[ÉÈÊ]/E/g;
+  s/[íìî]/i/g;
+  s/[ÍÌÎ]/I/g;
+  s/[öóòô]/o/g;
+  s/[ÖÓÒÔ]/O/g;
+  s/[üúùû]/u/g;
+  s/[ÜÚÙÛ]/U/g;
+  s/ß/ss/g;
+
+  s/^-+//;
+  s/\((.*?)\)/_$1/g;
+  s/\[(.*?)\]/_$1/g;
+  s/[!?]//g;
+  s/[\s&+'"~]+/_/g;
+  s/\.+/\./g;
+  s/%\d\d/_/g;
+  s/[_-]+\././g;
+  s/^_+//g;
+  s/_+/_/g;
+  s/_-_/-/g;
+  s/[\W_]+$//;
+
+  # Susanne-Langhans1122 -> Susanne_Langhans_2016-11-22
+  my $year = strftime("%Y", localtime);
+  s/^(\w+)-(\w+)(\d\d)(\d\d)_/$1_$2_$year-$4-$3_/;
+
+  # 50298232_susanne-langhans2908 -> Susanne_Langhans_2017-08-29
+  s/\d+_(\w+)-(\w+)(\d\d)(\d\d)-/\u$1_\u$2_$year-$4-$3_/;
+
+  # Jane_Doe_130698340_janedoe_london122119_07.jpg -> Jane_Doe_130698340_london122119_07.jpg
+  s/^(([a-z]+)_([a-z]+).*)_\l\2\W*\l\3(.*)/$1$4/i;
+
+  # Jane_Doe_2019-10-20_london102019.jpg -> Jane_Doe_2019-10-20_london.jpg
+  s/(20(\d\d)-(\d\d)-(\d\d)_(.*))\3\4\2/$1/;
+  s/(20(\d\d)-(\d\d)-(\d\d)_(.*))\4\3\2/$1/;
+
+  s/_+/_/g;
+
+  $_ = "UNNAMED" unless $_ ne "";
+
+  $_ = encode("utf-8", $_);
+  my $new = "$_.$ext";
+  if ($new ne $old) {
+    if (-e $new) {
+      for (my $i = 1; ; ++$i) {
+	$new = "${_}_$i.$ext";
+	last unless -e $new;
+      }
+    }
+    print basename($0).": $old -> $new\n";
+    unless ($test) {
+      rename($old, $new) or warn "Couldn't rename $old to $new: $!\n";
+    }
+  }
+}

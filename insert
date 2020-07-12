@@ -1,0 +1,31 @@
+#!/bin/bash
+
+usage() {
+  echo >&2 "Usage: $(basename $0) number [file ...]"
+  exit 1
+}
+
+if [ $# -eq 0 ]; then
+  usage
+fi
+
+number="$1"
+if [[ $number =~ ^[0-9]$ ]]; then
+  number="0$number"
+fi
+if [[ $number == 'x' ]]; then
+  number='xx'
+fi
+shift
+
+if [[ ! $number =~ ^([0-9]+|xx)$ ]]; then
+  usage
+fi
+
+files=(*.jpg)
+if [[ $# -ne 0 ]]; then
+  files=("$@")
+fi
+
+rename -v "s/_/-$number-/" "${files[@]}"
+

@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+sub s2u {
+  my $x = shift;
+  $x =~ s/[\s_]+/_/g;
+  return $x;
+}
+
+chomp(@ARGV = <STDIN>) unless @ARGV;
+for my $old (@ARGV) {
+  my $new = $old;
+  if ($old =~ /(.*)\/(.*)/) {
+    my $dir = $1;
+    my $file = $2;
+    $file = s2u $file;
+    $new = "$dir/$file";
+  } else {
+    $new = s2u $new;
+  }
+  if ($new ne $old) {
+    if (-e $new) {
+      print STDERR "Not renaming $old to $new (file exists)!\n";
+    } else {
+      print "$old -> $new\n";
+      rename($old, $new);
+    }
+  }
+}

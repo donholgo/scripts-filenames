@@ -1,0 +1,66 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+use Getopt::Long;
+
+sub shuffle {
+  my @new;
+  push @new, splice(@_, int rand @_, 1) while @_;
+  return @new;
+}
+
+my $shuffle = undef;
+my @pin = ();
+my $test = undef;
+GetOptions(
+           "pin=s" => \@pin,
+           "shuffle" => \$shuffle,
+           "test" => \$test,
+);
+die "Usage: ".(basename $0)." file ...\nRenumbers given files to 01.file1, 02.file2 etc.\n" unless @ARGV;
+
+my %seen;
+my %positions;
+foreach (@pin) {
+  my ($pos, $file) = m/^(-?\d+)=(.*)/ or die "pin syntax: NN=XXX\n";
+  die "Position $pos used more than once\n" if defined $positions{$pos};
+  $positions{$pos} = $file;
+  $seen{$file} = 1;
+}
+
+my @unpinned;
+foreach (@ARGV) {
+  if (-f) {
+    push @unpinned, $_ unless $seen{$_};
+    $seen{$_} = 1;
+  }
+}
+
+my $files = keys %seen;
+for (my $k = 1; $k <= $files; ++$k) {
+  my $m = $k - $files - 1;
+  die "Position $k equals position $m\n" if defined $positions{$k} && defined $positions{$m};
+}
+
+@unpinned = shuffle @unpinned if $shuffle;
+
+my $digits = 1;
+$digits += 1 while $files >= "1".("0" x $digits);
+
+for (my $k = 1; $k <= $files; ++$k) {
+  my $m = $k - $files - 1;
+  my $old = defined $positions{$k} ? $positions{$k} :
+    defined $positions{$m} ? $positions{$m} :
+      shift @unpinned;
+  my $new = $old;
+  $new =~ s-.*/--;
+  $new =~ s/^\d+//;
+  $new = ".$new" unless $new =~ /^\./;
+  $new = (sprintf "%0${digits}i", $k).$new;
+  print "$new <- $old\n";
+  if ($new ne $old && !$test) {
+    rename $old, $new or die "couldn't rename $old to $new";
+  }
+}

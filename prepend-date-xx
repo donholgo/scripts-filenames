@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+use Getopt::Long;
+use POSIX qw(strftime);
+
+my $date;
+my $number;
+my $test;
+GetOptions("date=s" => \$date, "number" => \$number, "test" => \$test);
+
+die "Usage: ".(basename $0)." [-date DATE] [-number] file ...\n" unless @ARGV;
+
+$date =~ s/-//g if $date;
+
+my %files_by_mtime;
+foreach (@ARGV) {
+  my $mtime = (stat)[9];
+  my $iso = strftime "%Y%m%d", localtime($mtime);
+  push @{$files_by_mtime{$mtime}}, $_;
+}
+
+my $n = "xx";
+my $last_iso = "";
+foreach my $mtime (sort keys %files_by_mtime) {
+  my $iso = strftime "%Y%m%d", localtime($mtime);
+  next if $date && $iso ne $date;
+
+  if ($number && $iso ne $last_iso) {
+    $n = 0;
+    $last_iso = $iso;
+  }
+  foreach my $old (@{$files_by_mtime{$mtime}}) {
+    $n = sprintf "%02i", $n+1 if $number;
+    my $new = "$iso-$n-$old";
+    print "$old -> $new\n";
+    unless ($test) {
+      rename $old, $new or warn "can't rename: $!\n";
+    }
+  }
+}
+
+
+
+
+
+
