@@ -1,0 +1,109 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+use Getopt::Long;
+
+my $by_suffix = 0;
+my $continue = 0;
+my $prefix = '';
+my $renumber = 0;  # remove existing numerical prefixes NN.
+my $reverse = 0;
+my $skip_numbered = 0;
+my $start = 1;
+my $test = 0;
+
+GetOptions(
+  'by-suffix' => \$by_suffix,
+  'continue' => \$continue,
+  'prefix=s' => \$prefix,
+  'renumber' => \$renumber,
+  'reverse' => \$reverse,
+  'skip-numbered' => \$skip_numbered,
+  'start=i' => \$start,
+  'test' => \$test,
+);
+
+my $script = basename $0;
+die <<EOF unless @ARGV;
+Usage:
+  $script [options] file ...
+
+Options:
+  -by-suffix (renumber separately for all present suffixes)
+  -continue (continue existing numbering, implies -skip-numbered)
+  -prefix PREFIX
+  -renumber (remove existing numerical NN. prefixes)
+  -reverse
+  -skip-numbered (skip files that already have a number prefix)
+  -start STARTVALUE
+  -test (don't rename, only print what would happen)
+EOF
+
+if ($start != 1 && $continue) {
+  die "Error: -continue and -start cannot be used together.\n";
+}
+$skip_numbered = 1 if $continue;
+
+my @files = grep { -e } @ARGV;
+if ($by_suffix) {
+  my %files_by_suffix;
+  foreach my $file (@files) {
+    (my $suffix = lc $file) =~ s/.*\.//;
+    push @{$files_by_suffix{$suffix}}, $file;
+  }
+  for my $suffix (sort keys %files_by_suffix) {
+    print "=== Suffix '$suffix' ===\n";
+    renumber_files(\@{$files_by_suffix{$suffix}});
+  }
+} else {
+  renumber_files(\@files);
+}
+
+
+sub renumber_files {
+  my @files = @{$_[0]};
+  my @sorted_files = sort compare_by_mtime @files;
+  @sorted_files = reverse @sorted_files if $reverse;
+
+  if ($continue) {
+    $start = 0;
+    foreach my $file (@sorted_files) {
+      if ($file =~ /^(\d+)\./) {
+	$start = $1 if $1 > $start;
+      }
+    }
+    ++$start;
+  }
+  my $n = $start;
+  foreach my $file (@sorted_files) {
+    if ($skip_numbered && $file =~ /^\d+\./) {
+      warn "Skipping '$file' (already numbered).\n";
+      next;
+    }
+    my $base = $file;
+    if ($renumber) {
+      $base =~ s/^\d+\.//;
+    }
+    my $new_name = sprintf "%s%02u.%s", $prefix, $n++, $base;
+    if (-e $new_name) {
+      warn "Not renaming '$file' to '$new_name' (file exists).\n";
+    } else {
+      my $ok = $test ? 1 : rename $file, $new_name;
+      if ($ok) {
+        print "$file -> $new_name\n";
+      } else {
+        warn "Can't rename '$file' to '$new_name': $!\n";
+      }
+    }
+  }
+}
+
+sub compare_by_mtime {
+  return mtime($a) cmp mtime($b);
+}
+
+sub mtime {
+  return (stat $_[0])[9];
+}

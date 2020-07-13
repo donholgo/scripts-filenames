@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo >&2 "Usage: $(basename $0) file ..."
+  exit 1
+fi
+
+k=1
+len=${##}
+
+for file; do
+  n=$(printf "%0*i" $len $k)
+  suffix="${file/*./}"
+  new="$n.$suffix"
+  echo "$file -> $new"
+  mv "$file" "$new" || echo >&2 "Can't rename $file to $new: $!"
+  ((++k))
+done
