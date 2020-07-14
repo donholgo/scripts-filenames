@@ -1,0 +1,15 @@
+#!/bin/bash
+
+files=("$@")
+
+if [ $# -eq 0 ]; then
+  shopt -s nullglob
+  files=(*.avi *.mkv *.mpg *.mpeg *.mp4 *.webm)
+fi
+
+if [[ ${#files[@]} -ne 0 ]]; then
+  rename -v 's/-[a-z0-9_-]{11}(\.\w+)$/$1/i' "${files[@]}"
+else
+  echo >&2 "No files to rename."
+fi
+
