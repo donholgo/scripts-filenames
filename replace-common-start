@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+die "Usage: ".(basename $0)." replacement [file ...]\n" unless @ARGV;
+my $replacement = shift;
+my @files = @ARGV ? @ARGV : glob("*");
+
+my $prefix = "";
+foreach (@files) {
+  if ($prefix) {
+    while (index($_, $prefix) == -1) {
+      $prefix = substr $prefix, 0, length($prefix) - 1;
+    }
+    $prefix = "" unless index($_, $prefix) == 0;
+    last unless $prefix;
+  } else {
+    $prefix = $_;
+  }
+}
+
+if ($prefix) {
+  foreach my $old (@files) {
+    (my $new = $old) =~ s/\Q$prefix/$replacement/;
+    print "$old -> $new\n";
+    rename $old, $new;
+  }
+} else {
+  print STDERR "No common prefix found.\n";
+}
