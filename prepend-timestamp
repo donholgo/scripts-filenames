@@ -7,8 +7,40 @@ use Getopt::Long;
 use POSIX qw(strftime);
 
 my $format = '%Y%m%d_%H%M%S';
-my $separator = '-';
+my $separator = '.';
 my $replace = 0;
+my $help = 0;
+
+my $basename = basename $0;
+my $usage = <<EOF;
+Usage:
+  $basename [options] file ...
+
+Prepend file names with the files' formatted mtimes.
+
+Options:
+-format STRFTIME-FORMAT
+  Use STRFTIME-FORMAT to format the timestamp. '%n' can
+  be used in the format string to refer to the file's
+  basename without extension
+  (default: '$format')
+
+-replace
+  Instead of just prepending the timestamp, replace the
+  entire basename (except the extension) with it.
+
+-separator SEPARATOR
+  Use separator SEPARATOR between timestamp and basename.
+  (default: '$separator')
+ 
+-test
+  Dry run: only print old/new names, do not rename files.
+
+-help, -?
+  Print usage and exit.
+EOF
+
+
 
 my $test;
 GetOptions(
@@ -16,9 +48,15 @@ GetOptions(
   "replace" => \$replace,
   "separator=s" => \$separator,
   "test" => \$test,
+  "help|?" => \$help,
 );
 
-die "Usage:\n  ".(basename $0)." [-format STRFTIME-FORMAT] [-replace] [-separator SEPARATOR] [-test] file ...\n\n(Defaults: format '%Y%m%d_%H%M%S', separator '-')\n" unless @ARGV;
+die $usage unless @ARGV;
+if ($help) {
+  print $usage;
+  exit 0;
+}
+
 
 foreach (@ARGV) {
   next unless -f;
