@@ -22,7 +22,7 @@ Options:
 -format STRFTIME-FORMAT
   Use STRFTIME-FORMAT to format the timestamp. '%n' can
   be used in the format string to refer to the file's
-  basename without extension
+  basename without extension.
   (default: '$format')
 
 -replace
@@ -39,7 +39,6 @@ Options:
 -help, -?
   Print usage and exit.
 EOF
-
 
 
 my $test;
@@ -80,15 +79,23 @@ foreach (@ARGV) {
     $f =~ s/%n/$aux/g;
   }
   my $formatted = strftime($f, localtime($mtime));
-  my $new = $dir.($replace ? $formatted : "${formatted}${separator}$base").$ext;
-  print "$_ -> $new\n";
-  unless ($test) {
-    rename $_, $new or warn "can't rename: $!\n";
+  my $newbase = $base;
+  if ($replace) {
+    $newbase = $formatted;
+  } else {
+    if (rindex $base, $formatted.$separator, 0 != 0) {
+      $newbase = $formatted.$separator.$base;
+    }
+  }
+  my $new = $dir.$newbase.$ext;
+  if ($new ne $_) {
+    print "$_ -> $new\n";
+    unless ($test) {
+      if (-e $new) {
+	warn "Not renaming $_ to $new (file exists)!\n";
+      } else {
+	rename $_, $new or warn "can't rename: $!\n";
+      }
+    }
   }
 }
-
-
-
-
-
-
