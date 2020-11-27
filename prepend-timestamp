@@ -25,6 +25,9 @@ Options:
   basename without extension.
   (default: '$format')
 
+-date
+  Abbreviation for '-format %Y%m%d'.
+
 -replace
   Instead of just prepending the timestamp, replace the
   entire basename (except the extension) with it.
@@ -43,6 +46,7 @@ EOF
 
 my $test;
 GetOptions(
+  "date" => sub { $format = '%Y%m%d'; },
   "format=s" => \$format,
   "replace" => \$replace,
   "separator=s" => \$separator,
