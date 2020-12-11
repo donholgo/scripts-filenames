@@ -10,7 +10,8 @@ my $test = 0;
 my $copy = 0;
 GetOptions( "copy" => \$copy, "test" => \$test );
 
-my $prefix = shift or die "Usage: ".(basename $0)." [-copy] [-test] prefix [file ...]\n";
+die "Usage: ".(basename $0)." [-copy] [-test] prefix [file ...]\n" unless @ARGV;
+my $prefix = shift;
 chomp(@ARGV = <STDIN>) unless @ARGV;
 for (@ARGV) {
   my $was = $_;
