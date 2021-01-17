@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]; then
+  echo >&2 "Usage: $(basename -- "$0") new-prefix file ..."
+  exit 1
+fi
+
+new_prefix=$1
+shift
+
+rename -v 's/.*(-[0-9a-z_-]{11}\.\w+)$/'"$new_prefix"'$1/i' "$@"
