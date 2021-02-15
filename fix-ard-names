@@ -1,0 +1,9 @@
+#!/bin/bash
+
+files=(*.mp4)
+if [[ $# -ne 0 ]]; then
+  files=("$@")
+fi
+
+rename -v 's/(.*) \(S0(\d)_E(\d+)\)-\d+/$2$3.$1/' "${files[@]}"
+
