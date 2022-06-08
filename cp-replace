@@ -1,0 +1,113 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Cwd 'abs_path';
+use File::Basename;
+use File::Copy;
+use Getopt::Long;
+
+my $help = 0;
+my $verbose = 0;
+my $dry_run = 0;
+my $overwrite = 0;
+my $use_basename = 0;
+
+GetOptions(
+  'd|filename' => \$use_basename,
+  'f|force' => \$overwrite,
+  'h|help' => \$help,
+  'n|dry-run' => \$dry_run,
+  'v|verbose' => \$verbose,
+);
+
+if ($help) {
+  warn usage();
+  exit(0);
+}
+
+unless (@ARGV >= 3) {
+  warn usage();
+  exit(1);
+}
+
+$verbose = 1 if $dry_run;
+
+my $string = shift;
+my $replacement = shift;
+
+for my $old (@ARGV) {
+  if (! -f $old) {
+    warn "No file $old.\n";
+    next;
+  }
+
+  my $new;
+  if ($use_basename) {
+    my $dir = dirname $old;
+    $old = basename $old;
+    ($new = $old) =~ s/\Q$string/$replacement/;
+    $new = "$dir/$new" unless $dir eq '.';
+  } else {
+    ($new = $old) =~ s/\Q$string/$replacement/;
+  }
+
+  if (abs_path($old) eq abs_path($new)) {
+    warn "Not copying $old (no new file name).\n";
+    next;
+  }
+
+  my $do_copy = !$dry_run;
+  my $target_exists = -e $new;
+
+  print "$old -> $new" if $verbose;
+  if ($target_exists) {
+    if ($overwrite && -f $new) {
+      print " (overwriting!)" if $verbose;
+    } else {
+      if ($verbose) {
+        print " (not overwriting)"
+      } else {
+        warn "Not copying $old -> $new (file exists already).\n";
+      }
+      $do_copy = 0;
+    }
+  }
+  print "\n" if $verbose;
+
+  if ($do_copy) {
+    copy($old, $new) or warn("Copying $old to $new failed: $!\n");
+  }
+}
+
+
+sub usage {
+  my $basename = basename $0;
+  return <<EOF;
+Usage:
+  $basename [options] <string> <replacement> <file> ...
+
+Copy each specified <file>, deriving the name for the copy by
+replacing <string> with <replacement> in the file name.
+
+Options:
+  -d, -filename
+    Only consider the actual file name (no directory components
+    in the path) when applying the replacement.
+
+  -f, -force
+    Allow existing files to be overwritten when creating copies.
+
+  -n, -dry-run
+    Do not create any copies, just print what would happen.
+
+  -v, -verbose
+    Print names of files and created copies.
+
+  -h, -help
+    Display this help message and exit.
+EOF
+}
+
+
+
