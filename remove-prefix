@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if (( "$#" < 2 )); then
+  echo >&2 "Usage: $(basename -- "$0") <prefix> <file> ..."
+  exit 1
+fi
+
+prefix=$1
+shift
+
+for file; do
+  new=${file#$prefix}
+  if [[ $file != $new ]]; then
+    if [[ -e $new ]]; then
+      echo >&2 "Not renaming '${file}' to '${new}' (file exists)."
+    else
+      if ! mv "$file" "$new"; then
+        echo >&2 "Cannot rename '${file}' to '${new}'."
+      fi
+    fi
+  fi
+done
+
