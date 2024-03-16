@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -
 
 if [ $# -lt 2 ]; then
   echo >&2 "Usage: $(basename -- "$0") new-prefix file ..."
