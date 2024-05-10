@@ -8,11 +8,26 @@ fi
 k=1
 len=${##}
 
+# check whether there are collisions
+ok=1
 for file; do
   n=$(printf "%0*i" $len $k)
-  suffix="${file/*./}"
-  new="$n.$suffix"
-  echo "$file -> $new"
+  new="$n.$file"
+  if [[ -e $new ]]; then
+    echo >&2 "File $new already exists."
+    ok=0
+  fi
+  ((++k))
+done
+if (( ok == 0 )); then
+  exit 2
+fi
+
+k=1
+for file; do
+  n=$(printf "%0*i" $len $k)
+  new="$n.$file"
+  printf '%s -> %s\n' "$file" "$new"
   mv "$file" "$new" || echo >&2 "Can't rename $file to $new: $!"
   ((++k))
 done
