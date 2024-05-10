@@ -1,0 +1,141 @@
+#!/bin/bash -
+
+usage() {
+  cat <<EOF
+Usage:
+  $(basename -- "$0") [options] <search> <replace> <file> ...
+
+Rename the <file>(s) by replacing <search> (glob pattern)
+by <replace>.
+
+Options:
+  -c - copy
+    Do not rename the file, but create a copy.
+
+  -f - force
+    Overwrite existing files.
+
+  -g - global
+    Replace globally (default is just the first time).
+
+  -h - help
+    Print help message and exit.
+
+  -n - dry run
+    Do not move/copy any files, only print what would happen.
+
+  -v - verbose
+    Print what happens.
+EOF
+}
+
+warn() {
+  printf >&2 '%s\n' "$1"
+}
+
+missing_argument() {
+  warn "Missing argument for '$1'."
+  exit 2
+}
+
+if [ $# -eq 0 ]; then
+  usage >&2
+  exit 1
+fi
+
+args=()
+copy=0
+dryrun=0
+force=0
+help=0
+replace_globally=0
+verbose=0
+
+OPTSTRING=':cfghnv'
+while getopts ${OPTSTRING} opt; do
+  case ${opt} in
+    c)
+      copy=1
+      ;;
+    f)
+      force=1
+      ;;
+    g)
+      replace_globally=1
+      ;;
+    h)
+      help=1
+      ;;
+    n)
+      dryrun=1
+      ;;
+    v)
+      verbose=1
+      ;;
+    ?)
+      echo >&2 "Invalid option: -${OPTARG}."
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+if (( help )); then
+  usage
+  exit 0
+fi
+
+if (( "$#" < 3 )); then
+  usage >&2
+  exit 1
+fi
+
+search_string=$1
+replace_string=$2
+shift 2
+
+cmd='mv'
+arrow='->'
+if (( copy )); then
+  cmd='cp'
+  arrow='+>'
+fi
+cmdarr=( "$cmd")
+if (( force )); then
+  cmdarr+=('-f')
+fi
+cmdarr+=('--')
+
+for file; do
+  if [[ $search_string == '^' ]]; then
+    new="${replace_string}${file}"
+  elif [[ $search_string == '$' ]]; then
+    new="${file}${replace_string}"
+  elif (( replace_globally )); then
+    new=${file//$search_string/$replace_string}
+  else
+    new=${file/$search_string/$replace_string}
+  fi
+  if [[ $new == $file ]]; then
+    warn "Name unchanged for '$file', skipping."
+    continue
+  fi
+  if (( dryrun )); then
+    printf '%s %s %s' "$file" "$arrow" "$new"
+    if [[ -f "$new" ]]; then
+      printf '%s' ' (file exists!)'
+    fi
+    printf '\n'
+    continue
+  fi
+  if [[ -f "$new" ]] && ! (( force )); then
+    warn "Not ${cmd}-ing '${file}' to '${new}', target file exists already (use -f to overwrite)."
+    continue
+  fi
+  "${cmdarr[@]}" "$file" "$new"
+  if [[ $? -eq 0 ]]; then
+    (( verbose )) && printf '%s %s %s\n' "$file" "$arrow" "$new"
+  else
+    warn "Cannot ${cmd} '${file}' to '${new}'."
+  fi
+done
