@@ -42,6 +42,7 @@ foreach (@files) {
   s/^Preppie_(-_)?//;
   s/_?Tikipeter//i;
   s/_?celebritycity//;
+  s/_alesim-/_/;
   s/Celebrity_?City_?//i;
   s/by_mah0ne[-_]//;
   s/celeb-city.org_//;
@@ -69,6 +70,8 @@ foreach (@files) {
   s/\.worldoftvbabes\.co\.uk//;
   s/^_?MG_/IMG_/;
   s/_jpg//ig;
+  s/_n$//;
+  s/-v0-/_/;
 
   s/^\d+_(catheinz)/$1/;
 
@@ -77,16 +80,20 @@ foreach (@files) {
     s/_([a-z]+)/_\u$1/g;
   }
 
-  s/[äáàâ]/a/g;
+  s/(\D)[03-9]\d\d\d-\d\d-\d\d/$1/;
+
+  s/[äáàâą]/a/g;
   s/[ÄÁÀÂ]/A/g;
-  s/[éèê]/e/g;
-  s/[ÉÈÊ]/E/g;
+  s/[éèêę]/e/g;
+  s/[ÉÈÊĘ]/E/g;
   s/[íìî]/i/g;
   s/[ÍÌÎ]/I/g;
   s/[öóòô]/o/g;
   s/[ÖÓÒÔ]/O/g;
   s/[üúùû]/u/g;
   s/[ÜÚÙÛ]/U/g;
+  s/ł/l/g;
+  s/ź/z/g;
   s/ß/ss/g;
 
   s/^-+//;
@@ -96,25 +103,31 @@ foreach (@files) {
   s/[\s&+'"~]+/_/g;
   s/\.+/\./g;
   s/%\d\d/_/g;
-  s/[_-]+\././g;
   s/^_+//g;
   s/_+/_/g;
   s/_-_/-/g;
   s/[\W_]+$//;
+  s/([^_-])[_-]{2,}([^_-])/$1_$2/g;
 
   # Susanne-Langhans1122 -> Susanne_Langhans_2016-11-22
-  my $year = strftime("%Y", localtime);
-  s/^(\w+)-(\w+)(\d\d)(\d\d)_/$1_$2_$year-$4-$3_/;
+  #my $year = strftime("%Y", localtime);
+  #s/^(\w+)-(\w+)(\d\d)(\d\d)_/$1_$2_$year-$4-$3_/;
 
   # 50298232_susanne-langhans2908 -> Susanne_Langhans_2017-08-29
-  s/\d+_(\w+)-(\w+)(\d\d)(\d\d)-/\u$1_\u$2_$year-$4-$3_/;
+  #s/\d+_(\w+)-(\w+)(\d\d)(\d\d)-/\u$1_\u$2_$year-$4-$3_/;
 
   # Jane_Doe_130698340_janedoe_london122119_07.jpg -> Jane_Doe_130698340_london122119_07.jpg
-  s/^(([a-z]+)_([a-z]+).*)_\l\2\W*\l\3(.*)/$1$4/i;
+  #s/^(([a-z]+)_([a-z]+).*)_\l\2\W*\l\3(.*)/$1$4/i;
 
   # Jane_Doe_2019-10-20_london102019.jpg -> Jane_Doe_2019-10-20_london.jpg
-  s/(20(\d\d)-(\d\d)-(\d\d)_(.*))\3\4\2/$1/;
-  s/(20(\d\d)-(\d\d)-(\d\d)_(.*))\4\3\2/$1/;
+  #s/(20(\d\d)-(\d\d)-(\d\d)_(.*))\3\4\2/$1/;
+  #s/(20(\d\d)-(\d\d)-(\d\d)_(.*))\4\3\2/$1/;
+
+  s/_vlcsnap-....-..-..-..h..m..s...//;
+  s/_bild_20\d\d_\d\d_\d\d_\d\d_\d\d_\d\d//;
+
+  # replace digit sequences with length > 6 by 6 random digits
+  s/(\D)[0-9a-f]{7,}(\D[0-9a-f]{6,})*/$1.(100000 + int(rand 900000))/eg;
 
   s/_+/_/g;
 
