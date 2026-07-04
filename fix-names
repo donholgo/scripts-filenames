@@ -103,6 +103,7 @@ for (my $i = 0; $i < @files; ++$i) {
   s/[ÜÚÙÛ]/U/g;
   s/ł/l/g;
   s/ń/n/g;
+  s/ś/s/g;
   s/ź/z/g;
   s/ß/ss/g;
 
